@@ -68,9 +68,11 @@ int m24c64::read(const uint16_t address, uint8_t* const data, const size_t lengt
     }
     size_t length_capped = (address + length > m_size_total) ? m_size_total - address : length;
 
-    /* Wait a little bit if a write has just been performed
-     * @todo Improve by implementing polling on ack */
+    /* Wait a little bit if a write has just been performed */
     while (millis() - m_timestamp_write <= 5) {
+        if (detect() == true) {
+            break;
+        }
     }
 
     /* Read bytes */
@@ -117,9 +119,11 @@ int m24c64::write(const uint16_t address, const uint8_t* const data, const size_
     /* Write bytes */
     for (size_t i = 0; i < length_capped;) {
 
-        /* Wait a little bit if a write has just been performed
-         * @todo Improve by implementing polling on ack */
+        /* Wait a little bit if a write has just been performed */
         while (millis() - m_timestamp_write <= 5) {
+            if (detect() == true) {
+                break;
+            }
         }
 
 #if PAGE_WRITE_SUPPORTED
