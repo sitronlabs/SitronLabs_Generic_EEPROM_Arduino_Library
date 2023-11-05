@@ -83,7 +83,7 @@ int m24c64::read(const uint16_t address, uint8_t* const data, const size_t lengt
         if (res <= 0) {
             return i;
         } else {
-            for (size_t j = 0; j < res; j++) {
+            for (size_t j = 0; j < ((unsigned int) res); j++) {
                 data[i + j] = m_i2c_library->read();
             }
             i += res;
