@@ -1,0 +1,9 @@
+m24c64	KEYWORD1
+setup	KEYWORD2
+detect	KEYWORD2
+read	KEYWORD2
+write	KEYWORD2
+available	KEYWORD2
+peek	KEYWORD2
+seek_read	KEYWORD2
+seek_write	KEYWORD2

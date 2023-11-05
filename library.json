@@ -1,14 +1,17 @@
 {
     "name": "Sitron_Labs_EEPROM_Arduino_Library",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Arduino library supporting various EEPROMs (Electrically-Erasable Programmable Read-Only Memory).",
     "keywords": "sitron labs,sitron,labs,arduino,library,storage,i2c,spi,eeprom,external,memory,stream",
     "repository": {
         "type": "git",
-        "url": "https:\/\/github.com\/sitronlabs\/SitronLabs_EEPROM_Arduino_Library.git"
+        "url": "https:\/\/github.com\/sitronlabs\/SitronLabs_Generic_EEPROM_Arduino_Library.git"
     },
     "frameworks": "arduino",
     "platforms": "*",
+    "dependencies": {
+        "Wire": "*"
+    },
     "build": {
         "includeDir": "src"
     }
