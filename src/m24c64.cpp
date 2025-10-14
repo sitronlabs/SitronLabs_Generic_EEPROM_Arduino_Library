@@ -184,7 +184,7 @@ int m24c64::read() {
     uint8_t data;
     int res = read(m_index_read, &data, 1);
     if (res < 0) {
-        return 0;
+        return -1;
     } else {
         m_index_read += res;
         return data;
@@ -200,7 +200,7 @@ int m24c64::peek() {
     uint8_t data;
     int res = read(m_index_read, &data, 1);
     if (res < 0) {
-        return 0;
+        return -1;
     } else {
         return data;
     }
