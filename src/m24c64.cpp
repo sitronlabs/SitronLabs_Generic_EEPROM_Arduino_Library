@@ -20,12 +20,12 @@
  */
 int m24c64::setup(TwoWire& i2c_library, const uint8_t i2c_address) {
 
-    /* Ensure i2c address is within valid range */
+    /* Ensure I2C address is within valid range (0x50-0x57) */
     if ((i2c_address & 0xF8) != 0x50) {
         return -EINVAL;
     }
 
-    /* Enable i2c */
+    /* Store I2C library reference and device address */
     m_i2c_library = &i2c_library;
     m_i2c_address = i2c_address;
 
@@ -48,10 +48,10 @@ bool m24c64::detect(void) {
 }
 
 /**
- *
- * @param[in] address
- * @param[out] data
- * @param[in] length
+ * @brief Read data from the M24C64 EEPROM
+ * @param[in] address Starting address to read from (0-8191)
+ * @param[out] data Buffer to store the read data
+ * @param[in] length Number of bytes to read
  * @return The number of bytes read in case of success, or a negative error code otherwise.
  */
 int m24c64::read(const uint16_t address, uint8_t* const data, const size_t length) {
@@ -62,20 +62,20 @@ int m24c64::read(const uint16_t address, uint8_t* const data, const size_t lengt
         return -EINVAL;
     }
 
-    /* Ensure start address is valid and prevent stop address from creatign a rollover */
+    /* Ensure start address is valid and prevent address rollover */
     if (address >= m_size_total) {
         return -EINVAL;
     }
     size_t length_capped = (address + length > m_size_total) ? m_size_total - address : length;
 
-    /* Wait a little bit if a write has just been performed */
+    /* Wait for write cycle completion if a write was recently performed */
     while (millis() - m_timestamp_write <= 5) {
         if (detect() == true) {
             break;
         }
     }
 
-    /* Read bytes */
+    /* Read bytes from EEPROM */
     for (size_t i = 0; i < length_capped;) {
         m_i2c_library->beginTransmission(m_i2c_address);
         m_i2c_library->write((uint8_t)((address + i) >> 8));
@@ -85,22 +85,22 @@ int m24c64::read(const uint16_t address, uint8_t* const data, const size_t lengt
         if (res <= 0) {
             return i;
         } else {
-            for (size_t j = 0; j < ((unsigned int) res); j++) {
+            for (size_t j = 0; j < ((unsigned int)res); j++) {
                 data[i + j] = m_i2c_library->read();
             }
             i += res;
         }
     }
 
-    /* Return number of bytes read */
+    /* Return number of bytes successfully read */
     return length_capped;
 }
 
 /**
- *
- * @param[in] address
- * @param[in] data
- * @param[in] length
+ * @brief Write data to the M24C64 EEPROM
+ * @param[in] address Starting address to write to (0-8191)
+ * @param[in] data Data to write to the EEPROM
+ * @param[in] length Number of bytes to write
  * @return The number of bytes written in case of success, or a negative error code otherwise.
  */
 int m24c64::write(const uint16_t address, const uint8_t* const data, const size_t length) {
@@ -110,16 +110,16 @@ int m24c64::write(const uint16_t address, const uint8_t* const data, const size_
         return -EINVAL;
     }
 
-    /* Ensure start address is valid and prevent stop address from creating a rollover */
+    /* Ensure start address is valid and prevent address rollover */
     if (address >= m_size_total) {
         return -EINVAL;
     }
     size_t length_capped = (address + length > m_size_total) ? m_size_total - address : length;
 
-    /* Write bytes */
+    /* Write bytes to EEPROM */
     for (size_t i = 0; i < length_capped;) {
 
-        /* Wait a little bit if a write has just been performed */
+        /* Wait for previous write cycle completion if needed */
         while (millis() - m_timestamp_write <= 5) {
             if (detect() == true) {
                 break;
@@ -127,7 +127,7 @@ int m24c64::write(const uint16_t address, const uint8_t* const data, const size_
         }
 
 #if PAGE_WRITE_SUPPORTED
-        /* Page write when possible */
+        /* Use page write when possible for better performance */
         if ((address + i) % m_size_page == 0 && length_capped - i >= m_size_page && I2C_BUFFER_SIZE >= m_size_page + 2) {
             m_i2c_library->beginTransmission(m_i2c_address);
             m_i2c_library->write((uint8_t)((address + i) >> 8));
@@ -137,7 +137,7 @@ int m24c64::write(const uint16_t address, const uint8_t* const data, const size_
             m_timestamp_write = millis();
         }
 
-        /* Byte write otherwise */
+        /* Fall back to byte-by-byte write */
         else {
             m_i2c_library->beginTransmission(m_i2c_address);
             m_i2c_library->write((uint8_t)((address + i) >> 8));
@@ -147,7 +147,7 @@ int m24c64::write(const uint16_t address, const uint8_t* const data, const size_
             m_timestamp_write = millis();
         }
 #else
-        /* Byte write */
+        /* Use byte-by-byte write when page write is not supported */
         m_i2c_library->beginTransmission(m_i2c_address);
         m_i2c_library->write((uint8_t)((address + i) >> 8));
         m_i2c_library->write((uint8_t)((address + i) >> 0));
@@ -157,14 +157,14 @@ int m24c64::write(const uint16_t address, const uint8_t* const data, const size_
 #endif
     }
 
-    /* Return number of bytes written */
+    /* Return number of bytes successfully written */
     return length_capped;
 }
 
 /**
  * Gets the number of bytes available in the stream. This is only for bytes that have already arrived.
  * @note Inherited from the stream interface
- * @see https://www.arduino.cc/reference/en/language/functions/communication/stream/streamavailable/
+ * @see https://docs.arduino.cc/language-reference/en/functions/communication/stream/streamAvailable/
  */
 int m24c64::available() {
     if (m_index_read <= m_size_total) {
@@ -177,7 +177,7 @@ int m24c64::available() {
 /**
  * Reads characters from an incoming stream to the buffer.
  * @note Inherited from the stream interface
- * @see https://www.arduino.cc/reference/en/language/functions/communication/stream/streamread
+ * @see https://docs.arduino.cc/language-reference/en/functions/communication/stream/streamRead/
  */
 
 int m24c64::read() {
@@ -194,7 +194,7 @@ int m24c64::read() {
 /**
  * Read a byte from the file without advancing to the next one. That is, successive calls to peek() will return the same value, as will the next call to read().
  * @note Inherited from the stream interface
- * @see https://www.arduino.cc/reference/en/language/functions/communication/stream/streampeek/
+ * @see https://docs.arduino.cc/language-reference/en/functions/communication/stream/streamPeek/
  */
 int m24c64::peek() {
     uint8_t data;
@@ -207,8 +207,9 @@ int m24c64::peek() {
 }
 
 /**
- *
- * @param[in] data
+ * @brief Write a single byte to the stream
+ * @param[in] data Byte to write
+ * @return Number of bytes written
  * @note Inherited from the print interface
  */
 size_t m24c64::write(uint8_t data) {
@@ -222,9 +223,10 @@ size_t m24c64::write(uint8_t data) {
 }
 
 /**
- *
- * @param[in] data
- * @param[in] length
+ * @brief Write multiple bytes to the stream
+ * @param[in] data Pointer to data to write
+ * @param[in] length Number of bytes to write
+ * @return Number of bytes written
  * @note Inherited from the print interface
  */
 size_t m24c64::write(const uint8_t* data, size_t length) {
@@ -238,9 +240,9 @@ size_t m24c64::write(const uint8_t* data, size_t length) {
 }
 
 /**
- * @brief
- * @param index
- * @return
+ * @brief Set the read position in the stream
+ * @param index Position to seek to (0-8191)
+ * @return New position or (size_t)-1 on error
  */
 size_t m24c64::seek_read(size_t index) {
     if (index < m_size_total) {
@@ -252,9 +254,9 @@ size_t m24c64::seek_read(size_t index) {
 }
 
 /**
- * @brief
- * @param index
- * @return
+ * @brief Set the write position in the stream
+ * @param index Position to seek to (0-8191)
+ * @return New position or (size_t)-1 on error
  */
 size_t m24c64::seek_write(size_t index) {
     if (index < m_size_total) {
