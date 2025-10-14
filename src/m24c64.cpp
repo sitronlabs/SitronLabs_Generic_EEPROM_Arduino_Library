@@ -69,7 +69,7 @@ int m24c64::read(const uint16_t address, uint8_t* const data, const size_t lengt
     size_t length_capped = (address + length > m_size_total) ? m_size_total - address : length;
 
     /* Wait for write cycle completion if a write was recently performed */
-    while (millis() - m_timestamp_write <= 5) {
+    while ((millis() - m_timestamp_write) <= 5) {
         if (detect() == true) {
             break;
         }
@@ -120,7 +120,7 @@ int m24c64::write(const uint16_t address, const uint8_t* const data, const size_
     for (size_t i = 0; i < length_capped;) {
 
         /* Wait for previous write cycle completion if needed */
-        while (millis() - m_timestamp_write <= 5) {
+        while ((millis() - m_timestamp_write) <= 5) {
             if (detect() == true) {
                 break;
             }
@@ -128,7 +128,7 @@ int m24c64::write(const uint16_t address, const uint8_t* const data, const size_
 
 #if PAGE_WRITE_SUPPORTED
         /* Use page write when possible for better performance */
-        if ((address + i) % m_size_page == 0 && length_capped - i >= m_size_page && I2C_BUFFER_SIZE >= m_size_page + 2) {
+        if (((address + i) % m_size_page == 0) && (length_capped - i >= m_size_page) && (I2C_BUFFER_SIZE >= m_size_page + 2)) {
             m_i2c_library->beginTransmission(m_i2c_address);
             m_i2c_library->write((uint8_t)((address + i) >> 8));
             m_i2c_library->write((uint8_t)((address + i) >> 0));
