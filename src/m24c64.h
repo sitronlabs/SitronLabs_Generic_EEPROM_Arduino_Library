@@ -130,14 +130,36 @@ class m24c64 : public Stream {
 
     /** @} */
 
+    /** @name Device Information Methods
+     * @{
+     */
+
+    /**
+     * @brief Get the total size of the EEPROM in bytes
+     * @return Total EEPROM size in bytes (8192 for M24C64)
+     */
+    static constexpr size_t size_total_get(void) {
+        return m_size_total;
+    }
+
+    /**
+     * @brief Get the page size for write operations in bytes
+     * @return Page size in bytes (32 for M24C64)
+     */
+    static constexpr size_t size_page_get(void) {
+        return m_size_page;
+    }
+
+    /** @} */
+
    protected:
-    TwoWire* m_i2c_library = NULL;    /**< @brief Pointer to I2C library instance */
-    uint8_t m_i2c_address;            /**< @brief I2C address of the M24C64 device */
-    size_t m_index_write = 0;         /**< @brief Current write position in stream */
-    size_t m_index_read = 0;          /**< @brief Current read position in stream */
-    const size_t m_size_total = 8192; /**< @brief Total EEPROM size in bytes (64 Kbit) */
-    const size_t m_size_page = 32;    /**< @brief Page size for write operations (32 bytes) */
-    uint32_t m_timestamp_write = 0;   /**< @brief Timestamp of last write operation for timing */
+    TwoWire* m_i2c_library = NULL;               /**< @brief Pointer to I2C library instance */
+    uint8_t m_i2c_address;                       /**< @brief I2C address of the M24C64 device */
+    size_t m_index_write = 0;                    /**< @brief Current write position in stream */
+    size_t m_index_read = 0;                     /**< @brief Current read position in stream */
+    static constexpr size_t m_size_total = 8192; /**< @brief Total EEPROM size in bytes (64 Kbit) */
+    static constexpr size_t m_size_page = 32;    /**< @brief Page size for write operations (32 bytes) */
+    uint32_t m_timestamp_write = 0;              /**< @brief Timestamp of last write operation for timing */
 };
 
 #endif
