@@ -134,6 +134,24 @@ class m24c64 : public Stream {
 
     /** @} */
 
+    /** @name Device Information Methods
+     * @{
+     */
+
+    /**
+     * @brief Get the total size of the EEPROM in bytes
+     * @return Total EEPROM size in bytes (8192 for M24C64)
+     */
+    size_t size_total_get(void) const;
+
+    /**
+     * @brief Get the page size for write operations in bytes
+     * @return Page size in bytes (32 for M24C64)
+     */
+    size_t size_page_get(void) const;
+
+    /** @} */
+
    protected:
     TwoWire* m_i2c_library = NULL;    /**< @brief Pointer to I2C library instance */
     uint8_t m_i2c_address;            /**< @brief I2C address of the M24C64 device */

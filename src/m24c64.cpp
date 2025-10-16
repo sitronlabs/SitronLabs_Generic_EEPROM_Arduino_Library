@@ -266,3 +266,19 @@ size_t m24c64::seek_write(size_t index) {
         return ((size_t)-1);
     }
 }
+
+/**
+ * @brief Get the total size of the EEPROM in bytes
+ * @return Total EEPROM size in bytes (8192 for M24C64)
+ */
+size_t m24c64::size_total_get(void) const {
+    return m_size_total;
+}
+
+/**
+ * @brief Get the page size for write operations in bytes
+ * @return Page size in bytes (32 for M24C64)
+ */
+size_t m24c64::size_page_get(void) const {
+    return m_size_page;
+}
