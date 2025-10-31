@@ -162,6 +162,123 @@ int m24c64::write(const uint16_t address, const uint8_t* const data, const size_
 }
 
 /**
+ * @brief Write data to the EEPROM using buffered page writes
+ *
+ * This function buffers consecutive writes that start at page boundaries and automatically
+ * combines them into efficient page write operations. If the incoming address is not
+ * consecutive with existing buffered data, the buffer is automatically flushed first.
+ *
+ * @param[in] address Starting EEPROM address to write to (0-8191)
+ * @param[in] data Pointer to data buffer to write
+ * @param[in] length Number of bytes to write
+ * @return Number of bytes processed (buffered or written) on success, or negative error
+ *         code on failure. Note: Buffered bytes are not written until the buffer is full
+ *         or buffer_flush() is called.
+ *
+ * @note The buffer automatically flushes when it reaches one page size (32 bytes) or when
+ *       a non-consecutive write is attempted.
+ */
+int m24c64::buffered_write(const uint16_t address, const uint8_t* const data, const size_t length) {
+    int res;
+
+    /* Ensure setup has been performed */
+    if (m_i2c_library == NULL) {
+        return -EINVAL;
+    }
+
+    /* Ensure start address is valid and prevent address rollover */
+    if (address >= m_size_total) {
+        return -EINVAL;
+    }
+    size_t length_capped = (address + length > m_size_total) ? m_size_total - address : length;
+
+#if PAGE_WRITE_SUPPORTED
+    /* If the data is not contiguous with the buffer, flush the buffer first */
+    if (address != (m_buffer_start + m_buffer_length)) {
+        res = buffer_flush();
+        if (res < 0) {
+            return res;
+        }
+    }
+
+    /* For each byte */
+    for (size_t i = 0; i < length_capped; i++) {
+
+        /* If the buffer already has data, append to it */
+        if (m_buffer_length > 0) {
+            m_buffer[m_buffer_length] = data[i];
+            m_buffer_length++;
+
+            /* If the buffer is full, flush it */
+            if (m_buffer_length >= m_size_page) {
+                int res = buffer_flush();
+                if (res < 0) {
+                    return res;
+                }
+            }
+        }
+
+        /* If the buffer is empty */
+        else {
+
+            /* Start a new buffer only if it aligns with a page start */
+            if ((address + i) % m_size_page == 0) {
+                m_buffer_start = address + i;
+                m_buffer[m_buffer_length] = data[i];
+                m_buffer_length++;
+            }
+
+            /* Otherwise, write byte normally */
+            else {
+                res = write(address + i, &data[i], 1);
+                if (res < 0) {
+                    return res;
+                }
+            }
+        }
+    }
+
+    /* Return number of bytes successfully processed */
+    return length_capped;
+#else
+    /* Page write not supported, forward to regular write function */
+    return write(address, data, length);
+#endif
+}
+
+/**
+ * @brief Flush any pending buffered writes to the EEPROM
+ *
+ * Forces any data currently in the write buffer to be written to the EEPROM immediately.
+ * This is safe to call even if the buffer is empty.
+ *
+ * @return Number of bytes written on success (0 if buffer was empty), or negative error
+ *         code on failure
+ *
+ * @note Always call this function after your last buffered_write() call to ensure all
+ *       buffered data is committed to the EEPROM.
+ */
+int m24c64::buffer_flush(void) {
+    int res;
+
+    /* If buffer is not empty, write it to the EEPROM */
+    if (m_buffer_length > 0) {
+        res = write(m_buffer_start, m_buffer, m_buffer_length);
+        if (res < 0) {
+            return res;
+        }
+
+        /* Reset buffer */
+        m_buffer_length = 0;
+    } else {
+        res = 0;
+    }
+
+    /* Return number of bytes written */
+    return res;
+}
+
+/**
  * Gets the number of bytes available in the stream. This is only for bytes that have already arrived.
  * @note Inherited from the stream interface
  * @see https://docs.arduino.cc/language-reference/en/functions/communication/stream/streamAvailable/

@@ -65,6 +65,59 @@ class m24c64 : public Stream {
 
     /** @} */
 
+    /** @name Buffered Write Operations
+     * @{
+     *
+     * These functions provide buffered write operations that batch multiple consecutive
+     * byte writes into page write operations for improved performance. This is particularly
+     * useful when you have no control over calling code that makes many small consecutive
+     * writes (e.g., serializers, loggers, or protocol handlers).
+     *
+     * @note Buffering only occurs for writes that start at page boundaries (multiples of 32).
+     *       Non-page-aligned writes are sent directly to the EEPROM. The buffer automatically
+     *       flushes when it becomes full (one page), when a non-consecutive write is attempted,
+     *       or when buffer_flush() is explicitly called.
+     *
+     * @warning Always call buffer_flush() after your last buffered_write() call to ensure
+     *          all pending buffered data is written to the EEPROM before power loss or program
+     *          completion.
+     */
+
+    /**
+     * @brief Write data to the EEPROM using buffered page writes
+     *
+     * This function buffers consecutive writes that start at page boundaries and automatically
+     * combines them into efficient page write operations. If the incoming address is not
+     * consecutive with existing buffered data, the buffer is automatically flushed first.
+     *
+     * @param[in] address Starting EEPROM address to write to (0-8191)
+     * @param[in] data Pointer to data buffer to write
+     * @param[in] length Number of bytes to write
+     * @return Number of bytes processed (buffered or written) on success, or negative error
+     *         code on failure. Note: Buffered bytes are not written until the buffer is full
+     *         or buffer_flush() is called.
+     *
+     * @note The buffer automatically flushes when it reaches one page size (32 bytes) or when
+     *       a non-consecutive write is attempted.
+     */
+    int buffered_write(const uint16_t address, const uint8_t* const data, const size_t length);
+
+    /**
+     * @brief Flush any pending buffered writes to the EEPROM
+     *
+     * Forces any data currently in the write buffer to be written to the EEPROM immediately.
+     * This is safe to call even if the buffer is empty.
+     *
+     * @return Number of bytes written on success (0 if buffer was empty), or negative error
+     *         code on failure
+     *
+     * @note Always call this function after your last buffered_write() call to ensure all
+     *       buffered data is committed to the EEPROM.
+     */
+    int buffer_flush(void);
+
+    /** @} */
+
     /** @name Stream Interface Methods
      * @{
      */
@@ -160,6 +213,9 @@ class m24c64 : public Stream {
     static constexpr size_t m_size_total = 8192; /**< @brief Total EEPROM size in bytes (64 Kbit) */
     static constexpr size_t m_size_page = 32;    /**< @brief Page size for write operations (32 bytes) */
     uint32_t m_timestamp_write = 0;              /**< @brief Timestamp of last write operation for timing */
+    uint8_t m_buffer[m_size_page];               /**< @brief Buffer for buffered writes */
+    size_t m_buffer_start = 0;                   /**< @brief Index of next write position in buffer */
+    size_t m_buffer_length = 0;                  /**< @brief Length of data in buffer */
 };
 
 #endif

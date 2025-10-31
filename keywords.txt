@@ -3,6 +3,8 @@ setup	KEYWORD2
 detect	KEYWORD2
 read	KEYWORD2
 write	KEYWORD2
+buffered_write	KEYWORD2
+buffer_flush	KEYWORD2
 available	KEYWORD2
 peek	KEYWORD2
 seek_read	KEYWORD2
