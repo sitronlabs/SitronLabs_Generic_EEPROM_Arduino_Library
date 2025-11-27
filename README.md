@@ -1,23 +1,40 @@
+[![Designed by Sitron Labs](https://img.shields.io/badge/Designed_by-Sitron_Labs-FCE477.svg)](https://www.sitronlabs.com/)
+[![Join the Discord community](https://img.shields.io/discord/552242187665145866.svg?logo=discord&logoColor=white&label=Discord&color=%237289da)](https://discord.gg/btnVDeWhfW)
+[![PayPal Donate](https://img.shields.io/badge/PayPal-Donate-00457C.svg?logo=paypal&logoColor=white)](https://www.paypal.com/donate/?hosted_button_id=QLX8VU9Q3PFFL)
+![License](https://img.shields.io/github/license/sitronlabs/SitronLabs_Generic_EEPROM_Arduino_Library.svg)
+![Latest Release](https://img.shields.io/github/release/sitronlabs/SitronLabs_Generic_EEPROM_Arduino_Library.svg)
+[![Arduino Library Manager](https://www.ardu-badge.com/badge/Sitron%20Labs%20EEPROM%20Arduino%20Library.svg)](https://www.ardu-badge.com/Sitron%20Labs%20EEPROM%20Arduino%20Library)
+[![PlatformIO Registry](https://badges.registry.platformio.org/packages/sitronlabs/library/Sitron_Labs_EEPROM_Arduino_Library.svg)](https://registry.platformio.org/libraries/sitronlabs/Sitron_Labs_EEPROM_Arduino_Library)
+
 # Sitron Labs Generic EEPROM Arduino Library
 
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/sitronlabs/SitronLabs_Generic_EEPROM_Arduino_Library)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.txt)
-[![Arduino](https://img.shields.io/badge/Arduino-Compatible-orange.svg)](https://www.arduino.cc/)
-[![PlatformIO](https://img.shields.io/badge/PlatformIO-Compatible-blue.svg)](https://platformio.org/)
+Arduino library for interfacing with various I2C EEPROM devices.
 
-A professional, easy-to-use Arduino library for various I2C EEPROM devices. This library provides comprehensive support for data storage with both direct addressing and Arduino Stream interface compatibility across multiple EEPROM types and sizes.
+## Description
 
-## Features
+This library provides a simple and consistent interface to read and write data to I2C EEPROM devices. It supports both direct memory access and Arduino Stream interface compatibility, making it easy to use EEPROMs for data storage in your Arduino projects. The library includes automatic write cycle timing, address validation, and optimized page write operations when supported by the device and platform.
 
-- **Multiple EEPROM Support**: Support for various I2C EEPROM devices and sizes
-- **I2C Communication**: Simple I2C interface with multiple address options
-- **Stream Interface**: Compatible with Arduino Stream class for easy data handling
-- **Page Write Support**: Optimized page write operations when supported by platform
-- **Automatic Write Timing**: Built-in write cycle completion detection
-- **Address Validation**: Automatic bounds checking and rollover prevention
-- **Professional Documentation**: Extensive inline documentation and Doxygen support
-- **Error Handling**: Robust error checking and reporting
-- **Maker-Friendly**: Designed with ease of use and learning in mind
+## Installation
+
+### Arduino IDE
+
+Install via the Arduino Library Manager by searching for "Sitron Labs EEPROM".
+
+Alternatively, install manually:
+1. Download or clone this repository
+2. Place it in your Arduino `libraries` folder
+3. Restart the Arduino IDE
+
+### PlatformIO
+
+Install via the PlatformIO Library Manager by searching for "Sitron Labs EEPROM".
+
+Alternatively, add the library manually to your `platformio.ini` file:
+
+```ini
+lib_deps = 
+    https://github.com/sitronlabs/SitronLabs_Generic_EEPROM_Arduino_Library.git
+```
 
 ## Supported Devices
 
@@ -25,138 +42,60 @@ A professional, easy-to-use Arduino library for various I2C EEPROM devices. This
 |--------|-------------|-------------|-----------|--------|
 | M24C64 | 64 Kbit I2C EEPROM | 8,192 bytes | 32 bytes | ✅ Implemented |
 
-## Installation
-
-### Arduino IDE Library Manager
-1. Open Arduino IDE
-2. Go to **Tools** → **Manage Libraries**
-3. Search for "SitronLabs Generic EEPROM"
-4. Click **Install**
-
-### PlatformIO
-Add to your `platformio.ini`:
-```ini
-lib_deps = 
-    sitronlabs/SitronLabs_Generic_EEPROM_Arduino_Library
-```
-
-### Manual Installation
-1. Download the latest release from [GitHub](https://github.com/sitronlabs/SitronLabs_Generic_EEPROM_Arduino_Library/releases)
-2. Extract the ZIP file
-3. Copy the `SitronLabs_Generic_EEPROM_Arduino_Library` folder to your Arduino `libraries` directory
-4. Restart Arduino IDE
-
-## Quick Start
-
-### Basic Read/Write Example (M24C64)
-```cpp
-#include <Wire.h>
-#include <m24c64.h>
-
-m24c64 eeprom;
-
-void setup() {
-    Serial.begin(115200);
-    Wire.begin();
-    
-    /* Initialize M24C64 at I2C address 0x50 */
-    eeprom.setup(Wire, 0x50);
-    
-    if (!eeprom.detect()) {
-        Serial.println("M24C64 not found!");
-        while(1);
-    }
-    
-    Serial.println("M24C64 ready!");
-}
-
-void loop() {
-    /* Write data to EEPROM */
-    uint8_t data[] = "Hello, EEPROM!";
-    int result = eeprom.write(0, data, sizeof(data) - 1);
-    
-    if (result > 0) {
-        Serial.print("Written ");
-        Serial.print(result);
-        Serial.println(" bytes");
-    }
-    
-    delay(1000);
-    
-    /* Read data back */
-    uint8_t buffer[20];
-    result = eeprom.read(0, buffer, sizeof(buffer));
-    
-    if (result > 0) {
-        buffer[result] = '\0';  // Null terminate
-        Serial.print("Read: ");
-        Serial.println((char*)buffer);
-    }
-    
-    delay(5000);
-}
-```
-
-### Stream Interface Example
-```cpp
-void loop() {
-    /* Use as Arduino Stream */
-    eeprom.seek_write(100);  // Set write position
-    eeprom.print("Temperature: ");
-    eeprom.println(25.6);
-    
-    /* Read back using Stream interface */
-    eeprom.seek_read(100);   // Set read position
-    while (eeprom.available()) {
-        char c = eeprom.read();
-        Serial.print(c);
-    }
-    Serial.println();
-    
-    delay(2000);
-}
-```
-
 ## API Reference
 
-### Initialization
-```cpp
-/* Setup I2C communication */
-int setup(TwoWire &i2c_library, uint8_t i2c_address);
+### setup(TwoWire &i2c_library, uint8_t i2c_address)
 
-/* Detect if chip is present */
-bool detect();
-```
+Initializes the EEPROM device.
 
-### Direct Memory Access
-```cpp
-/* Read data from EEPROM */
-int read(uint16_t address, uint8_t* data, size_t length);
+- `i2c_library`: I2C library instance to use (typically `Wire`)
+- `i2c_address`: I2C address of the EEPROM device
 
-/* Write data to EEPROM */
-int write(uint16_t address, const uint8_t* data, size_t length);
-```
+Returns 0 on success, or a negative error code otherwise.
+
+### detect(void)
+
+Detects if the EEPROM device is present on the I2C bus.
+
+Returns true if device is detected, false otherwise.
+
+### read(uint16_t address, uint8_t* data, size_t length)
+
+Reads data from the EEPROM.
+
+- `address`: Starting address to read from
+- `data`: Pointer to buffer where read data will be stored
+- `length`: Number of bytes to read
+
+Returns the number of bytes read on success, or a negative error code otherwise.
+
+### write(uint16_t address, const uint8_t* data, size_t length)
+
+Writes data to the EEPROM.
+
+- `address`: Starting address to write to
+- `data`: Pointer to buffer containing data to write
+- `length`: Number of bytes to write
+
+Returns the number of bytes written on success, or a negative error code otherwise.
 
 ### Stream Interface Methods
-```cpp
-/* Stream positioning */
-size_t seek_read(size_t index);
-size_t seek_write(size_t index);
 
-/* Stream I/O */
-int available();
-int read();
-int peek();
-size_t write(uint8_t data);
-size_t write(const uint8_t* data, size_t length);
-```
+The EEPROM classes inherit from Arduino's Stream class, providing the following methods:
 
-### Device Information
-```cpp
-/* Get EEPROM specifications */
-size_t size_total_get();  // Returns 8192 bytes
-size_t size_page_get();   // Returns 32 bytes
-```
+- `seek_read(size_t index)`: Sets the read position for Stream operations
+- `seek_write(size_t index)`: Sets the write position for Stream operations
+- `available()`: Returns the number of bytes available to read
+- `read()`: Reads a byte from the EEPROM
+- `peek()`: Peeks at the next byte without removing it
+- `write(uint8_t data)`: Writes a byte to the EEPROM
+- `print()`: Prints data to the EEPROM
+- `println()`: Prints data with a newline
+
+### Device Information Methods
+
+- `size_total_get()`: Returns the total memory size in bytes
+- `size_page_get()`: Returns the page size in bytes
 
 ## Error Handling
 
@@ -169,18 +108,10 @@ Common error codes:
 - `-EIO`: I2C communication error
 - `-ETIMEDOUT`: Device not responding
 
-## License
+## Specifications
 
-This library is released under the MIT License. See [LICENSE.txt](LICENSE.txt) for details.
-
-## Support
-
-For support, please:
-1. Check the [Issues](https://github.com/sitronlabs/SitronLabs_Generic_EEPROM_Arduino_Library/issues) page
-2. Join our [Discord community](https://discord.gg/b6VzayWAMZ) for live support and discussion
-
----
-
-**Sitron Labs** - Helping makers build what matters
-
-[Website](https://sitronlabs.com) | [Store](https://www.sitronlabs.com/store) | [Discord](https://discord.gg/b6VzayWAMZ) | [GitHub](https://github.com/sitronlabs)
+- Communication interface: I2C
+- Stream interface: Compatible with Arduino Stream class
+- Page write support: Optimized when supported by device and platform
+- Automatic write timing: Built-in write cycle completion detection
+- Address validation: Automatic bounds checking and rollover prevention
